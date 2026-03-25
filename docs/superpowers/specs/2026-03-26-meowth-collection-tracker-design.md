@@ -70,6 +70,8 @@ Log and browse individual purchases.
 | Art Supplies | Gold (`#b8860b`) | Tools and materials for 3D card art |
 | Others | Gray (`#9a9a9a`) | Anything that doesn't fit above |
 
+**Note:** Expenses and Collection are intentionally independent. Adding a card to the collection does not auto-create a Singles expense (and vice versa). The user manually logs both — this keeps the data model simple and avoids assumptions about purchase intent (e.g., a card pulled from a pack isn't a singles purchase).
+
 ### 3. Collection
 
 Browse and manage the card collection, grouped by set.
@@ -87,6 +89,14 @@ Browse and manage the card collection, grouped by set.
   - Toggle: "Mark as Art Collection" — when enabled, reveals a manual value input
   - Add to Collection button
 
+**Expense Data Model:**
+- `id`: unique identifier
+- `itemName`: name of the purchased item
+- `category`: one of `sealed`, `singles`, `supplies`, `art-supplies`, `others`
+- `amount`: cost in dollars
+- `date`: purchase date
+- `notes`: optional freeform text
+
 **Card Data Model:**
 - `id`: unique identifier
 - `pokemonTcgId`: API card ID (for price updates)
@@ -96,7 +106,7 @@ Browse and manage the card collection, grouped by set.
 - `number`: card number in set
 - `rarity`: rarity string
 - `imageUrl`: card image URL from API
-- `marketPrice`: latest market price from API
+- `marketPrice`: market price snapshot captured at time of adding (v1 does not auto-refresh; future feature)
 - `isArtCollection`: boolean flag
 - `artValue`: manual value (only when isArtCollection is true)
 - `dateAdded`: when the card was added
