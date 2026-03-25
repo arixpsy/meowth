@@ -164,6 +164,21 @@ A `pokemonTcgApi` service module:
 
 The API is free and doesn't require authentication for basic usage. Rate limit: 1000 requests/day without an API key, 30,000/day with a free key.
 
+### Currency
+
+The app operates in **SGD (Singapore Dollars)** as the primary display currency.
+
+- **Expenses:** All entered and stored in SGD.
+- **Art collection values:** Manually entered in SGD.
+- **Card market prices:** The Pokemon TCG API returns prices in USD. When a card is added, the USD price is stored as `marketPriceUsd`. A `currencyService` module converts USD → SGD for display and P/L calculations.
+- **P/L calculation:** Total spent (SGD) vs. total collection value (card market prices converted to SGD + art collection values already in SGD).
+- **Exchange rate source:** A free API (e.g., exchangerate-api.com or a similar free tier service). The rate is fetched on app load and cached in localStorage with a TTL (e.g., refresh once per day). If the fetch fails, fall back to the last cached rate.
+- **Display:** All monetary values shown in SGD with `$` prefix throughout the app. The card detail / add-card panel can show the original USD market price as secondary info.
+
+**Card Data Model update:**
+- `marketPriceUsd`: market price in USD from API (snapshot at time of adding)
+- `marketPriceSgd`: converted SGD value (recalculated when exchange rate updates)
+
 ## Responsive Design
 
 **Desktop (>1024px):** Sidebar navigation (240px), full content area with multi-column layouts.
