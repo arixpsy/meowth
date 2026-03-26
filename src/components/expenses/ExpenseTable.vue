@@ -34,8 +34,8 @@ function handleDelete(id: string) {
 }
 
 function formatDate(iso: string): string {
-  const [year, month, day] = iso.split('-').map(Number)
-  const d = new Date(year, month - 1, day)
+  const parts = iso.split('-').map(Number)
+  const d = new Date(parts[0]!, parts[1]! - 1, parts[2])
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 </script>

@@ -20,7 +20,7 @@ export const useCollectionStore = defineStore('collection', () => {
   function updateCard(id: string, data: Partial<Card>) {
     const index = cards.value.findIndex(c => c.id === id)
     if (index !== -1) {
-      cards.value[index] = { ...cards.value[index], ...data }
+      cards.value[index] = { ...cards.value[index], ...data } as Card
       save()
     }
   }

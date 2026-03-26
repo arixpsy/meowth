@@ -17,7 +17,7 @@ export const useExpenseStore = defineStore('expenses', () => {
   function updateExpense(id: string, data: Partial<Expense>): void {
     const index = expenses.value.findIndex((e) => e.id === id)
     if (index === -1) return
-    expenses.value[index] = { ...expenses.value[index], ...data }
+    expenses.value[index] = { ...expenses.value[index], ...data } as Expense
     storage.saveExpenses(expenses.value)
   }
 
