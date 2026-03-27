@@ -23,6 +23,9 @@ importers:
 
   .:
     dependencies:
+      '@tcgdex/sdk':
+        specifier: ^2.7.1
+        version: 2.7.1
       chart.js:
         specifier: ^4.5.1
         version: 4.5.1
@@ -247,6 +250,15 @@ packages:
     resolution: {integrity: sha512-ctxtJ/eA+t+6q2++vj5j7FYX3nRu311q1wfYH3xjlLOsczhlhxAg2FWNUXhpGvAw3BWo1xBcvOV6/YLc2r5FJw==}
     hasBin: true
 
+  '@cachex/core@1.0.1':
+    resolution: {integrity: sha512-sHynwjF9hKIvwg8rTUdvA7MOUMcUC5Mq0dpynPBILRS+IPvsHcE4Cb2uRSs0/I2nxO7NQp9p+xHYistdfJJSwg==}
+
+  '@cachex/memory@1.0.1':
+    resolution: {integrity: sha512-KWUTdCCXhIlAkJaVZMhUh9kD0uq8PxC3Z34Q3lMGZOAV6FXP/cOMW89ALrWX3VkoRrrM4R6MIMO+amZNOvEqgw==}
+
+  '@cachex/web-storage@1.0.1':
+    resolution: {integrity: sha512-E8Xa9qDZgNgr+lcj3eixowg7PH2CVZbp3huuoc5xVVTtwYrZi5YqbHBG12yG3r6C6Fts/2Yoq6cbVBSm6c8VRA==}
+
   '@csstools/color-helpers@6.0.2':
     resolution: {integrity: sha512-LMGQLS9EuADloEFkcTBR3BwV/CGHV7zyDxVRtVDTwdI2Ca4it0CCVTT9wCkxSgokjE5Ho41hEPgb8OEUwoXr6Q==}
     engines: {node: '>=20.19.0'}
@@ -282,6 +294,9 @@ packages:
   '@csstools/css-tokenizer@4.0.0':
     resolution: {integrity: sha512-QxULHAm7cNu72w97JUNCBFODFaXpbDg+dP8b/oWFAZ2MTRppA3U00Y2L1HqaS4J6yBqxwa/Y3nMBaxVKbB/NsA==}
     engines: {node: '>=20.19.0'}
+
+  '@dzeio/object-util@1.9.2':
+    resolution: {integrity: sha512-L3EBaHnDmf/+LAC61eCgWzcGXjbaOoFB4ml3eeOFxKlVlO6IZ2BpdstoqgAfLNKqdy4Ixp7TlP5z4ohdPxfSLg==}
 
   '@emnapi/core@1.9.1':
     resolution: {integrity: sha512-mukuNALVsoix/w1BJwFzwXBN/dHeejQtuVzcDsfOEsdpCumXb/E9j8w11h5S54tT1xhifGfbbSm/ICrObRb3KA==}
@@ -555,6 +570,10 @@ packages:
 
   '@standard-schema/spec@1.1.0':
     resolution: {integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==}
+
+  '@tcgdex/sdk@2.7.1':
+    resolution: {integrity: sha512-wPXdCLLQ0pLcJvvKaZFllhO4cagSsnWeWyzjtZKknySKpSTLwazKxzXW7IpsdEi1+IGIOhNYa51ZDOOGT7KVfw==}
+    engines: {node: '>=18'}
 
   '@tsconfig/node24@24.0.4':
     resolution: {integrity: sha512-2A933l5P5oCbv6qSxHs7ckKwobs8BDAe9SJ/Xr2Hy+nDlwmLE1GhFh/g/vXGRZWgxBg9nX/5piDtHR9Dkw/XuA==}
@@ -1894,6 +1913,18 @@ snapshots:
     dependencies:
       css-tree: 3.2.1
 
+  '@cachex/core@1.0.1':
+    dependencies:
+      '@dzeio/object-util': 1.9.2
+
+  '@cachex/memory@1.0.1':
+    dependencies:
+      '@cachex/core': 1.0.1
+
+  '@cachex/web-storage@1.0.1':
+    dependencies:
+      '@cachex/core': 1.0.1
+
   '@csstools/color-helpers@6.0.2': {}
 
   '@csstools/css-calc@3.1.1(@csstools/css-parser-algorithms@4.0.0(@csstools/css-tokenizer@4.0.0))(@csstools/css-tokenizer@4.0.0)':
@@ -1917,6 +1948,8 @@ snapshots:
       css-tree: 3.2.1
 
   '@csstools/css-tokenizer@4.0.0': {}
+
+  '@dzeio/object-util@1.9.2': {}
 
   '@emnapi/core@1.9.1':
     dependencies:
@@ -2093,6 +2126,12 @@ snapshots:
   '@rolldown/pluginutils@1.0.0-rc.8': {}
 
   '@standard-schema/spec@1.1.0': {}
+
+  '@tcgdex/sdk@2.7.1':
+    dependencies:
+      '@cachex/memory': 1.0.1
+      '@cachex/web-storage': 1.0.1
+      '@dzeio/object-util': 1.9.2
 
   '@tsconfig/node24@24.0.4': {}
 

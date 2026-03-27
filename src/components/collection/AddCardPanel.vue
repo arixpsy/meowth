@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import SlidePanel from '@/components/shared/SlidePanel.vue'
-import { searchCards } from '@/services/pokemonTcgApi'
-import type { PokemonTcgCard } from '@/services/pokemonTcgApi'
+import { searchCards, getCard } from '@/services/pokemonTcgApi'
+import type { PokemonTcgCardBrief, PokemonTcgCard } from '@/services/pokemonTcgApi'
 import { convertUsdToSgd, formatSgd } from '@/services/currencyService'
 import { useCollectionStore } from '@/stores/collectionStore'
 
@@ -18,7 +18,8 @@ const store = useCollectionStore()
 
 const query = ref('')
 const isLoading = ref(false)
-const results = ref<PokemonTcgCard[]>([])
+const isLoadingCard = ref(false)
+const results = ref<PokemonTcgCardBrief[]>([])
 const selectedCard = ref<PokemonTcgCard | null>(null)
 const isArtCollection = ref(false)
 const artValueInput = ref('')
@@ -26,9 +27,11 @@ const showSuccess = ref(false)
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
 
 function extractMarketPrice(tcgCard: PokemonTcgCard): number {
-  if (!tcgCard.tcgplayer?.prices) return 0
-  for (const priceType of Object.values(tcgCard.tcgplayer.prices)) {
-    if (priceType.market != null) return priceType.market
+  const pricing = tcgCard.pricing?.tcgplayer
+  if (!pricing) return 0
+  const variants = [pricing.normal, pricing.holofoil, pricing['reverse-holofoil'], pricing['1st-edition']]
+  for (const variant of variants) {
+    if (variant?.marketPrice != null) return variant.marketPrice
   }
   return 0
 }
@@ -47,10 +50,17 @@ function onQueryInput() {
   }, 300)
 }
 
-function selectCard(card: PokemonTcgCard) {
-  selectedCard.value = card
+async function selectCard(card: PokemonTcgCardBrief) {
+  isLoadingCard.value = true
+  try {
+    const fullCard = await getCard(card.id)
+    selectedCard.value = fullCard
+  } catch {
+    selectedCard.value = null
+  }
   isArtCollection.value = false
   artValueInput.value = ''
+  isLoadingCard.value = false
 }
 
 function addCard() {
@@ -70,9 +80,9 @@ function addCard() {
     name: tcgCard.name,
     setName: tcgCard.set.name,
     setId: tcgCard.set.id,
-    number: tcgCard.number,
+    number: tcgCard.localId,
     rarity: tcgCard.rarity ?? '',
-    imageUrl: tcgCard.images.small,
+    imageUrl: tcgCard.image ? `${tcgCard.image}/low.webp` : '',
     marketPriceUsd: marketUsd,
     marketPriceSgd: marketSgd,
     isArtCollection: isArtCollection.value,
@@ -134,7 +144,7 @@ watch(
       </div>
 
       <!-- Search results -->
-      <div v-else-if="results.length > 0 && !selectedCard" class="results-list">
+      <div v-else-if="results.length > 0 && !selectedCard && !isLoadingCard" class="results-list">
         <button
           v-for="result in results"
           :key="result.id"
@@ -142,20 +152,23 @@ watch(
           @click="selectCard(result)"
         >
           <img
-            v-if="result.images?.small"
-            :src="result.images.small"
+            v-if="result.image"
+            :src="`${result.image}/low.webp`"
             :alt="result.name"
             class="result-thumb"
           />
           <div v-else class="result-thumb-placeholder" />
           <div class="result-info">
             <span class="result-name">{{ result.name }}</span>
-            <span class="result-meta">{{ result.set.name }} · #{{ result.number }}</span>
-            <span class="result-price mono">
-              {{ extractMarketPrice(result) > 0 ? `$${extractMarketPrice(result).toFixed(2)} USD` : 'No price' }}
-            </span>
+            <span class="result-meta">#{{ result.localId }}</span>
           </div>
         </button>
+      </div>
+
+      <!-- Loading card details -->
+      <div v-else-if="isLoadingCard" class="loading-state">
+        <div class="spinner" />
+        <span>Loading card details...</span>
       </div>
 
       <!-- No results -->
@@ -176,8 +189,8 @@ watch(
 
         <div class="selected-card-preview">
           <img
-            v-if="selectedCard.images?.small"
-            :src="selectedCard.images.small"
+            v-if="selectedCard.image"
+            :src="`${selectedCard.image}/low.webp`"
             :alt="selectedCard.name"
             class="selected-card-image"
           />
@@ -185,7 +198,7 @@ watch(
           <div class="selected-card-details">
             <span class="selected-name">{{ selectedCard.name }}</span>
             <span class="selected-set">{{ selectedCard.set.name }}</span>
-            <span class="selected-number">#{{ selectedCard.number }}<span v-if="selectedCard.rarity"> · {{ selectedCard.rarity }}</span></span>
+            <span class="selected-number">#{{ selectedCard.localId }}<span v-if="selectedCard.rarity"> · {{ selectedCard.rarity }}</span></span>
 
             <div class="price-info">
               <div class="price-row">

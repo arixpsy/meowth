@@ -1,55 +1,61 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { searchCards, getSets } from '@/services/pokemonTcgApi'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+
+const { mockCardList, mockCardGet, mockSetList } = vi.hoisted(() => ({
+  mockCardList: vi.fn(),
+  mockCardGet: vi.fn(),
+  mockSetList: vi.fn(),
+}))
+
+vi.mock('@tcgdex/sdk', () => {
+  class MockTCGdex {
+    card = { list: mockCardList, get: mockCardGet }
+    set = { list: mockSetList }
+  }
+  const Query = {
+    create: () => ({
+      equal: vi.fn().mockReturnThis(),
+      contains: vi.fn().mockReturnThis(),
+      paginate: vi.fn().mockReturnThis(),
+      sort: vi.fn().mockReturnThis(),
+    }),
+  }
+  return { default: MockTCGdex, Query }
+})
+
+import { searchCards, getCard, getSets } from '@/services/pokemonTcgApi'
 
 describe('pokemonTcgApi', () => {
   beforeEach(() => {
-    vi.stubGlobal('fetch', vi.fn())
-  })
-
-  afterEach(() => {
-    vi.unstubAllGlobals()
+    vi.clearAllMocks()
   })
 
   describe('searchCards', () => {
-    it('calls correct API URL with query parameter', async () => {
-      const mockFetch = vi.mocked(fetch)
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ data: [] }),
-      } as Response)
+    it('returns mapped card briefs from TCGdex', async () => {
+      mockCardList.mockResolvedValueOnce([
+        { id: 'swsh3-136', localId: '136', name: 'Furret', image: 'https://assets.tcgdex.net/en/swsh/swsh3/136' },
+      ])
 
-      await searchCards('Pikachu')
-
-      expect(mockFetch).toHaveBeenCalledWith(
-        'https://api.pokemontcg.io/v2/cards?q=name:"Pikachu"&pageSize=20&select=id,name,set,number,rarity,images,tcgplayer',
-      )
-    })
-
-    it('maps API response to PokemonTcgCard format', async () => {
-      const mockFetch = vi.mocked(fetch)
-      const mockCard = {
-        id: 'xy1-1',
-        name: 'Venusaur-EX',
-        number: '1',
-        rarity: 'Rare Holo EX',
-        set: { id: 'xy1', name: 'XY' },
-        images: { small: 'https://images.pokemontcg.io/xy1/1.png', large: 'https://images.pokemontcg.io/xy1/1_hires.png' },
-        tcgplayer: { prices: { holofoil: { market: 5.99 } } },
-      }
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ data: [mockCard] }),
-      } as Response)
-
-      const result = await searchCards('Venusaur')
+      const result = await searchCards('Furret')
 
       expect(result).toHaveLength(1)
-      expect(result[0]).toEqual(mockCard)
+      expect(result[0]).toEqual({
+        id: 'swsh3-136',
+        name: 'Furret',
+        localId: '136',
+        image: 'https://assets.tcgdex.net/en/swsh/swsh3/136',
+      })
     })
 
-    it('returns empty array on network error', async () => {
-      const mockFetch = vi.mocked(fetch)
-      mockFetch.mockRejectedValueOnce(new Error('Network error'))
+    it('returns empty array when no results', async () => {
+      mockCardList.mockResolvedValueOnce(null)
+
+      const result = await searchCards('NonexistentCard')
+
+      expect(result).toEqual([])
+    })
+
+    it('returns empty array on error', async () => {
+      mockCardList.mockRejectedValueOnce(new Error('Network error'))
 
       const result = await searchCards('Pikachu')
 
@@ -57,24 +63,58 @@ describe('pokemonTcgApi', () => {
     })
   })
 
+  describe('getCard', () => {
+    it('returns full card with pricing from TCGdex', async () => {
+      mockCardGet.mockResolvedValueOnce({
+        id: 'swsh3-136',
+        name: 'Furret',
+        localId: '136',
+        rarity: 'Uncommon',
+        set: { id: 'swsh3', name: 'Darkness Ablaze' },
+        image: 'https://assets.tcgdex.net/en/swsh/swsh3/136',
+        pricing: {
+          tcgplayer: {
+            updated: '2026-03-26T20:04:46.000Z',
+            unit: 'USD',
+            normal: { marketPrice: 0.16 },
+          },
+        },
+      })
+
+      const result = await getCard('swsh3-136')
+
+      expect(result.id).toBe('swsh3-136')
+      expect(result.name).toBe('Furret')
+      expect(result.set.name).toBe('Darkness Ablaze')
+      expect(result.pricing?.tcgplayer?.normal?.marketPrice).toBe(0.16)
+    })
+
+    it('throws when card not found', async () => {
+      mockCardGet.mockResolvedValueOnce(null)
+
+      await expect(getCard('nonexistent')).rejects.toThrow('Card not found: nonexistent')
+    })
+  })
+
   describe('getSets', () => {
-    it('returns list of set objects', async () => {
-      const mockFetch = vi.mocked(fetch)
-      const mockSets = [
-        { id: 'sv1', name: 'Scarlet & Violet', releaseDate: '2023-03-31' },
-        { id: 'xy1', name: 'XY', releaseDate: '2014-02-05' },
-      ]
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ data: mockSets }),
-      } as Response)
+    it('returns list of sets', async () => {
+      mockSetList.mockResolvedValueOnce([
+        { id: 'sv1', name: 'Scarlet & Violet', cardCount: { total: 198, official: 198 } },
+        { id: 'swsh3', name: 'Darkness Ablaze', cardCount: { total: 201, official: 189 } },
+      ])
 
       const result = await getSets()
 
-      expect(result).toEqual(mockSets)
-      expect(mockFetch).toHaveBeenCalledWith(
-        'https://api.pokemontcg.io/v2/sets?select=id,name,releaseDate&orderBy=-releaseDate',
-      )
+      expect(result).toHaveLength(2)
+      expect(result[0]).toEqual({ id: 'sv1', name: 'Scarlet & Violet', releaseDate: '' })
+    })
+
+    it('returns empty array on error', async () => {
+      mockSetList.mockRejectedValueOnce(new Error('Network error'))
+
+      const result = await getSets()
+
+      expect(result).toEqual([])
     })
   })
 })
